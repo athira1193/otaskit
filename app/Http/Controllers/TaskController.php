@@ -6,6 +6,8 @@ use Illuminate\Http\Request;
 use App\Models\Task;
 use DataTables;
 use App\Models\Employ;
+use App\Models\TaskToEmployee;
+use Illuminate\Support\Facades\Mail;
 
 class TaskController extends Controller
 {
@@ -48,7 +50,9 @@ class TaskController extends Controller
         $task->title = $request->title;
         $task->description = $request->description;
         $task->save();
-        return redirect()->back()->with('status', 'your message here');
+        return redirect()->route('tasks.index')
+        ->with('status', 'Task Created Successfully');
+        //return redirect()->back()->with('status', 'your message here');
     }
 
     /**
@@ -90,6 +94,29 @@ class TaskController extends Controller
     }
     public function assigned(Request $request)
     {
-        dd($request->all());
+        //dd($request->all());
+        $employ = Employ::where('id', $request->emp_name)->first();
+        $task = Task::where('id', $request->task_id)->first();
+        $details = array('name'=>$employ->emp_name,'task'=>$task->title);
+        $sender_data = array('email' => $request->emp_email);
+
+        Mail::send('emails.MailtoEmploy', $details, function ($message)use($sender_data){
+
+            $message->to($sender_data['email'], 'Receiver Name');
+            $message->subject('Task Assigned');
+            $message->from('athira1193@gmail.com', 'ORISIS');
+        });
+        $task_to_emp = new TaskToEmployee();
+        $task_to_emp->task_id = $task->id;
+        $task_to_emp->emp_id = $employ->id;
+        $task_to_emp->status = 'assigned';
+        $task_to_emp->save();
+        Task::where('id', $task->id)
+       ->update([
+           'status' => 'assigned'
+        ]);
+        return redirect()->route('tasks.index')
+        ->with('status', 'Task updated Successfully');
+        //echo "Basic Email Sent. Check your inbox.";
     }
 }

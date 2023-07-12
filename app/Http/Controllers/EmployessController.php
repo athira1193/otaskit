@@ -50,7 +50,8 @@ class EmployessController extends Controller
         $employ->mobile = $request->mobile;
         $employ->dept_id  = $request->department;
         $employ->save();
-        return redirect()->back()->with('status', 'your message here');
+        return redirect()->route('employ.index')
+        ->with('status', 'New Employ Added');
     }
 
     /**
